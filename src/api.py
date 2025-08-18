@@ -26,8 +26,9 @@ def create_app(graph):
             "messages": [HumanMessage(request.message)],
             "session_id": request.session_id
         }
-        response = await graph.ainvoke(input_data)
-        
+        config = {"configurable": {"thread_id": "1"}}
+        response = await graph.ainvoke(input_data, config=config)
+
         # Get the last message (most recent AI response)
         ai_message = response['messages'][-1]
         
