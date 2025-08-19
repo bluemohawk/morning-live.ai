@@ -1,7 +1,8 @@
 # src/chat.py
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import ToolNode
+from langgraph.prebuilt import ToolNode, create_tool_calling_agent
+from langchain_core.prompts import ChatPromptTemplate
 from src.models import State
 from src.tools import tools
 
@@ -15,10 +16,18 @@ def should_continue(state: State) -> str:
     return END
 
 def create_chat_graph(llm_model):
-    def chatbot(state: State):
-        # The chatbot node now just calls the LLM
-        response = llm_model.invoke(state["messages"])
-        return {"messages": [response]}
+    # System prompt to instruct the agent
+    prompt = ChatPromptTemplate.from_messages(
+        [
+            (
+                "system",
+                "You are a helpful assistant. Please respond to the user's request only based on the given context.",
+            ),
+            ("placeholder", "{messages}"),
+        ]
+    )
+    # Create the tool-calling agent
+    chatbot = create_tool_calling_agent(llm_model, tools, prompt)
 
     builder = StateGraph(State)
 
